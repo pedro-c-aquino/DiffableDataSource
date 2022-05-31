@@ -38,7 +38,15 @@ class ViewController: UIViewController {
         setup()
         let data = setupMockData()
         updateSnapshot(with: data)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(self.handleAdd))
         
+    }
+    
+    @objc func handleAdd() {
+        guard let randomSection = Section.allCases.randomElement()
+        else { return }
+        let user = User(name: UUID().uuidString, backgroundColor: .random(), section: randomSection)
+        addItemsSnapshot(with: [user], section: randomSection)
     }
     
     func createDataSource() -> UserDataSource {
@@ -57,8 +65,20 @@ class ViewController: UIViewController {
             let filterUsers = values.filter { $0.section == section }
             snapshot.appendItems(filterUsers, toSection: section)
         }
-//
+
         dataSource.apply(snapshot, animatingDifferences: true)
+    }
+    
+    func addItemsSnapshot(with user: [User], section: Section) {
+        var snapshot = dataSource.snapshot()
+        snapshot.appendItems(user, toSection: section)
+        dataSource.apply(snapshot)
+    }
+    
+    func remove(_ user: User) {
+        var snapshot = dataSource.snapshot()
+        snapshot.deleteItems([user])
+        dataSource.apply(snapshot)
     }
 
 
@@ -96,6 +116,12 @@ extension ViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         50
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let user = dataSource.itemIdentifier(for: indexPath)
+        else { return }
+        remove(user)
     }
     
 }
